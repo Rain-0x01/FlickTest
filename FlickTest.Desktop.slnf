@@ -1,0 +1,11 @@
+﻿{
+  "solution": {
+    "path": "FlickTest.sln",
+    "projects": [
+      "FlickTest.Desktop\\FlickTest.Desktop.csproj",
+      "FlickTest.Game\\FlickTest.Game.csproj",
+      "FlickTest.Game.Tests\\FlickTest.Game.Tests.csproj",
+      "FlickTest.Resources\\FlickTest.Resources.csproj"
+    ]
+  }
+}

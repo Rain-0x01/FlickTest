@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="FlickTest.Desktop/FlickTest.Desktop.csproj" />
+  <Project Path="FlickTest.Game.Tests/FlickTest.Game.Tests.csproj" />
+  <Project Path="FlickTest.Game/FlickTest.Game.csproj" />
+  <Project Path="FlickTest.iOS/FlickTest.iOS.csproj" />
+  <Project Path="FlickTest.Resources/FlickTest.Resources.csproj" />
+</Solution>
