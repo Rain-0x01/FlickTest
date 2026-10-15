@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
@@ -14,8 +15,7 @@ namespace FlickTest.Game
         private Vector2 velocity;
         private bool dragging;
         private Vector2 dragOffset;
-        private Vector2 lastMousePos;
-        private Vector2 smoothVelocity;
+        private readonly Queue<(Vector2 pos, double time)> dragHistory = new();
 
         public Ball()
         {
@@ -36,7 +36,6 @@ namespace FlickTest.Game
             // 中键/右键删除这个球
             if (e.Button is MouseButton.Middle or MouseButton.Right)
                 Expire();
-
             // 左键也返回 true，使本球进入 ButtonDownInputQueue，拖拽才能触发
             return true;
         }
@@ -46,8 +45,8 @@ namespace FlickTest.Game
             dragging = true;
             dragOffset = Position - e.MousePosition;
             velocity = Vector2.Zero;
-            smoothVelocity = Vector2.Zero;
-            lastMousePos = e.MousePosition;
+            dragHistory.Clear();
+            dragHistory.Enqueue((e.MousePosition, Time.Current));
             this.ScaleTo(1.25f, 200, Easing.OutQuint);
             return true;
         }
@@ -55,42 +54,42 @@ namespace FlickTest.Game
         protected override void OnDrag(DragEvent e)
         {
             Position = e.MousePosition + dragOffset;
-
-            // dt 修正的平滑系数，避免事件频率影响手感
-            float dt = (float)Math.Max(Clock.ElapsedFrameTime / 1000.0, 0.001);
-            Vector2 currentVelocity = (e.MousePosition - lastMousePos) / dt;
-            smoothVelocity = Vector2.Lerp(smoothVelocity, currentVelocity, 1 - MathF.Pow(0.6f, dt));
-            lastMousePos = e.MousePosition;
+            double now = Time.Current;
+            dragHistory.Enqueue((e.MousePosition, now));
+            while (dragHistory.Count > 1 && now - dragHistory.Peek().time > 80)
+                dragHistory.Dequeue();
         }
 
         protected override void OnDragEnd(DragEndEvent e)
         {
             dragging = false;
-            velocity = smoothVelocity;
+            if (dragHistory.Count >= 2)
+            {
+                var (firstPos, firstTime) = dragHistory.Peek();
+                float dt = (float)Math.Max((Time.Current - firstTime) / 1000.0, 0.001);
+                velocity = (e.MousePosition - firstPos) / dt;
+            }
+            else
+            {
+                velocity = Vector2.Zero;
+            }
             this.ScaleTo(1f, 300, Easing.OutQuint);
         }
 
         protected override void Update()
         {
             base.Update();
-
             if (dragging || Parent == null) return;
-
             float dt = (float)(Clock.ElapsedFrameTime / 1000.0);
             if (dt <= 0) return;
-
             Position += velocity * dt;
-
             // 帧率无关的时间衰减摩擦力 (每秒大约衰减 60%)
             velocity *= MathF.Pow(0.4f, dt);
-
             if (velocity.Length < 10f)
                 velocity = Vector2.Zero;
-
             // Anchor.Centre 下的活动范围
             float boundX = Math.Max(0, (Parent.DrawWidth - DrawWidth) / 2f);
             float boundY = Math.Max(0, (Parent.DrawHeight - DrawHeight) / 2f);
-
             if (X < -boundX)
             {
                 X = -boundX;
@@ -101,7 +100,6 @@ namespace FlickTest.Game
                 X = boundX;
                 velocity.X = -MathF.Abs(velocity.X) * 0.75f;
             }
-
             if (Y < -boundY)
             {
                 Y = -boundY;
