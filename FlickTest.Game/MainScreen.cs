@@ -8,12 +8,15 @@ using osu.Framework.Input.Events;
 using osu.Framework.Screens;
 using osuTK;
 using osuTK.Graphics;
+using osuTK.Input;
 
 namespace FlickTest.Game
 {
     public partial class MainScreen : Screen
     {
         public IEnumerable<Ball> Balls => InternalChildren.OfType<Ball>();
+
+        public BallConfigOverlay Config { get; private set; }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -34,16 +37,30 @@ namespace FlickTest.Game
                     },
                 },
                 new Ball(),
+                Config = new BallConfigOverlay { Depth = -1 },
             };
         }
+
+        public void ShowBallConfig(Ball ball) => Config.Open(ball);
 
         // 背景左键单击 -> 在该处生成一个新球
         protected override bool OnClick(ClickEvent e)
         {
+            if (e.Button != MouseButton.Left) return false;
+
             AddInternal(new Ball
             {
                 Position = ToLocalSpace(e.ScreenSpaceMousePosition) - ChildSize / 2,
             });
+            return true;
+        }
+
+        // 背景右键 -> 进入全局设置页
+        protected override bool OnMouseDown(MouseDownEvent e)
+        {
+            if (e.Button != MouseButton.Right) return false;
+
+            this.Push(new SettingsScreen());
             return true;
         }
     }

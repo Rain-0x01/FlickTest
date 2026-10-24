@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
@@ -12,6 +13,12 @@ namespace FlickTest.Game
 {
     public partial class Ball : Circle
     {
+        public readonly BindableFloat BallSize = new(100) { MinValue = 20, MaxValue = 300 };
+        public readonly BindableFloat GlowRadius = new(30) { MinValue = 0, MaxValue = 100 };
+        public readonly BindableFloat Friction = new(0.4f) { MinValue = 0.05f, MaxValue = 0.95f };
+        public readonly BindableFloat Bounce = new(0.75f) { MinValue = 0, MaxValue = 1 };
+        public readonly Bindable<Colour4> BallColour = new(Colour4.White);
+
         private Vector2 velocity;
         private bool dragging;
         private Vector2 dragOffset;
@@ -19,15 +26,26 @@ namespace FlickTest.Game
 
         public Ball()
         {
-            Size = new Vector2(100);
-            Colour = Color4.White;
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
+
+            BallSize.BindValueChanged(v => Size = new Vector2(v.NewValue), true);
+            GlowRadius.BindValueChanged(_ => updateAppearance());
+            BallColour.BindValueChanged(_ => updateAppearance());
+
+            updateAppearance();
+        }
+
+        private void updateAppearance()
+        {
+            Colour = BallColour.Value;
+
+            Color4 colour = BallColour.Value;
             EdgeEffect = new EdgeEffectParameters
             {
                 Type = EdgeEffectType.Glow,
-                Colour = new Color4(0.5f, 0.3f, 1f, 0.6f),
-                Radius = 30,
+                Colour = new Color4(colour.R, colour.G, colour.B, 0.6f),
+                Radius = GlowRadius.Value,
             };
         }
 
@@ -40,6 +58,14 @@ namespace FlickTest.Game
             return true;
         }
 
+        protected override bool OnClick(ClickEvent e)
+        {
+            if (e.Button != MouseButton.Left) return false;
+
+            (Parent as MainScreen)?.ShowBallConfig(this);
+            return true;
+        }
+
         protected override bool OnDragStart(DragStartEvent e)
         {
             dragging = true;
@@ -47,7 +73,7 @@ namespace FlickTest.Game
             velocity = Vector2.Zero;
             dragHistory.Clear();
             dragHistory.Enqueue((e.MousePosition, Time.Current));
-            this.ScaleTo(1.25f, 200, Easing.OutQuint);
+            this.ScaleTo(BallSettings.DragScale.Value, 200, Easing.OutQuint);
             return true;
         }
 
@@ -56,7 +82,7 @@ namespace FlickTest.Game
             Position = e.MousePosition + dragOffset;
             double now = Time.Current;
             dragHistory.Enqueue((e.MousePosition, now));
-            while (dragHistory.Count > 1 && now - dragHistory.Peek().time > 80)
+            while (dragHistory.Count > 1 && now - dragHistory.Peek().time > BallSettings.FlickWindow.Value)
                 dragHistory.Dequeue();
         }
 
@@ -83,9 +109,9 @@ namespace FlickTest.Game
             float dt = (float)(Clock.ElapsedFrameTime / 1000.0);
             if (dt <= 0) return;
             Position += velocity * dt;
-            // 帧率无关的时间衰减摩擦力 (每秒大约衰减 60%)
-            velocity *= MathF.Pow(0.4f, dt);
-            if (velocity.Length < 10f)
+            // 帧率无关的时间衰减摩擦力 (每秒衰减)
+            velocity *= MathF.Pow(Friction.Value, dt);
+            if (velocity.Length < BallSettings.StopSpeed.Value)
                 velocity = Vector2.Zero;
             // Anchor.Centre 下的活动范围
             float boundX = Math.Max(0, (Parent.DrawWidth - DrawWidth) / 2f);
@@ -93,22 +119,22 @@ namespace FlickTest.Game
             if (X < -boundX)
             {
                 X = -boundX;
-                velocity.X = MathF.Abs(velocity.X) * 0.75f;
+                velocity.X = MathF.Abs(velocity.X) * Bounce.Value;
             }
             else if (X > boundX)
             {
                 X = boundX;
-                velocity.X = -MathF.Abs(velocity.X) * 0.75f;
+                velocity.X = -MathF.Abs(velocity.X) * Bounce.Value;
             }
             if (Y < -boundY)
             {
                 Y = -boundY;
-                velocity.Y = MathF.Abs(velocity.Y) * 0.75f;
+                velocity.Y = MathF.Abs(velocity.Y) * Bounce.Value;
             }
             else if (Y > boundY)
             {
                 Y = boundY;
-                velocity.Y = -MathF.Abs(velocity.Y) * 0.75f;
+                velocity.Y = -MathF.Abs(velocity.Y) * Bounce.Value;
             }
         }
     }

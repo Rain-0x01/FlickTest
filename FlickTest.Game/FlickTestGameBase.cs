@@ -3,6 +3,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.IO.Stores;
+using osu.Framework.Platform;
 using osuTK;
 
 namespace FlickTest.Game
@@ -26,9 +27,10 @@ namespace FlickTest.Game
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(Storage storage)
         {
             Resources.AddStore(new DllResourceStore(typeof(FlickTestResources).Assembly));
+            BallSettings.Load(storage);
         }
     }
 }
