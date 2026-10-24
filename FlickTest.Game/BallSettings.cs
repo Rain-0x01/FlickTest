@@ -13,9 +13,9 @@ namespace FlickTest.Game
 
     public static class BallSettings
     {
-        public static readonly BindableFloat FlickWindow = new(80f) { MinValue = 10f, MaxValue = 300f };
-        public static readonly BindableFloat DragScale = new(1.25f) { MinValue = 1f, MaxValue = 2f };
-        public static readonly BindableFloat StopSpeed = new(10f) { MinValue = 0f, MaxValue = 100f };
+        public static BindableFloat FlickWindow { get; } = new(80f) { MinValue = 10f, MaxValue = 300f };
+        public static BindableFloat DragScale { get; } = new(1.25f) { MinValue = 1f, MaxValue = 2f };
+        public static BindableFloat StopSpeed { get; } = new(10f) { MinValue = 0f, MaxValue = 100f };
 
         private static BallConfig config;
 
