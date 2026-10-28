@@ -23,6 +23,8 @@ namespace FlickTest.Game
         private readonly Bindable<Colour4> colourProxy = new(Colour4.White);
 
         private Ball target;
+        private Container panel;
+        private BasicColourPicker colourPicker;
 
         public BallConfigOverlay()
         {
@@ -36,78 +38,100 @@ namespace FlickTest.Game
             glowProxy.BindValueChanged(v => apply(b => b.GlowRadius.Value = v.NewValue));
             frictionProxy.BindValueChanged(v => apply(b => b.Friction.Value = v.NewValue));
             bounceProxy.BindValueChanged(v => apply(b => b.Bounce.Value = v.NewValue));
-            colourProxy.BindValueChanged(v => apply(b => b.BallColour.Value = v.NewValue));
 
-            InternalChildren = new Drawable[]
+            var swatchCircle = new Circle
             {
-                new Box
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Size = new Vector2(30),
+            };
+
+            colourProxy.BindValueChanged(v =>
+            {
+                apply(b => b.BallColour.Value = v.NewValue);
+                swatchCircle.Colour = v.NewValue;
+            }, true);
+
+            var swatch = new ClickableContainer
+            {
+                Position = new Vector2(170, 0),
+                Size = new Vector2(40),
+                Action = toggleColourPicker,
+                Children = new Drawable[]
                 {
-                    RelativeSizeAxes = Axes.Both,
-                    Colour = new Color4(0, 0, 0, 0.7f),
-                },
-                new Container
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Size = new Vector2(480, 700),
-                    Children = new Drawable[]
+                    new Circle
                     {
-                        new Box
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = new Color4(1, 1, 1, 0.35f),
+                    },
+                    swatchCircle,
+                },
+            };
+
+            colourPicker = new BasicColourPicker
+            {
+                Width = 200,
+                Current = colourProxy,
+            };
+
+            panel = new Container
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                AutoSizeAxes = Axes.Both,
+                Children = new Drawable[]
+                {
+                    new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = new Color4(0.1f, 0.1f, 0.15f, 1f),
+                    },
+                    new FillFlowContainer
+                    {
+                        AutoSizeAxes = Axes.Both,
+                        Direction = FillDirection.Vertical,
+                        Spacing = new Vector2(0, 8),
+                        Margin = new MarginPadding(20),
+                        Children = new Drawable[]
                         {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = new Color4(0.1f, 0.1f, 0.15f, 1f),
-                        },
-                        new FillFlowContainer
-                        {
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            AutoSizeAxes = Axes.Both,
-                            Direction = FillDirection.Vertical,
-                            Spacing = new Vector2(0, 8),
-                            Children = new Drawable[]
+                            new SpriteText
                             {
-                                new SpriteText
+                                Text = "Ball",
+                                Font = new FontUsage(size: 24),
+                                Margin = new MarginPadding { Bottom = 6 },
+                            },
+                            new Container
+                            {
+                                Size = new Vector2(440, 40),
+                                Children = new Drawable[]
                                 {
-                                    Text = "Ball",
-                                    Font = new FontUsage(size: 24),
-                                    Margin = new MarginPadding { Bottom = 6 },
-                                },
-                                new SettingRow("Size", sizeProxy),
-                                new SettingRow("Glow radius", glowProxy),
-                                new SettingRow("Friction", frictionProxy),
-                                new SettingRow("Bounce", bounceProxy),
-                                new BasicColourPicker
-                                {
-                                    Width = 200,
-                                    Current = colourProxy,
-                                },
-                                new FillFlowContainer
-                                {
-                                    AutoSizeAxes = Axes.Both,
-                                    Direction = FillDirection.Horizontal,
-                                    Spacing = new Vector2(10, 0),
-                                    Margin = new MarginPadding { Top = 8 },
-                                    Children = new Drawable[]
+                                    new SpriteText
                                     {
-                                        new BasicButton
-                                        {
-                                            Size = new Vector2(140, 40),
-                                            Text = "Apply to all",
-                                            Action = ApplyToAll,
-                                        },
-                                        new BasicButton
-                                        {
-                                            Size = new Vector2(100, 40),
-                                            Text = "Close",
-                                            Action = Hide,
-                                        },
+                                        Text = "Colour",
+                                        Position = new Vector2(0, 10),
+                                        Font = new FontUsage(size: 16),
                                     },
+                                    swatch,
                                 },
+                            },
+                            new SettingRow("Size", sizeProxy),
+                            new SettingRow("Glow radius", glowProxy),
+                            new SettingRow("Friction", frictionProxy),
+                            new SettingRow("Bounce", bounceProxy),
+                            colourPicker,
+                            new BasicButton
+                            {
+                                Size = new Vector2(140, 40),
+                                Margin = new MarginPadding { Top = 8 },
+                                Text = "Apply to all",
+                                Action = ApplyToAll,
                             },
                         },
                     },
                 },
             };
+
+            InternalChildren = new Drawable[] { panel };
         }
 
         public void Open(Ball ball)
@@ -119,6 +143,7 @@ namespace FlickTest.Game
             frictionProxy.Value = ball.Friction.Value;
             bounceProxy.Value = ball.Bounce.Value;
             colourProxy.Value = ball.BallColour.Value;
+            colourPicker.Alpha = 0;
 
             Show();
         }
@@ -127,6 +152,11 @@ namespace FlickTest.Game
         {
             if (target != null)
                 action(target);
+        }
+
+        private void toggleColourPicker()
+        {
+            colourPicker.Alpha = colourPicker.Alpha > 0 ? 0 : 1;
         }
 
         public void ApplyToAll()
@@ -145,9 +175,23 @@ namespace FlickTest.Game
             }
         }
 
-        protected override void PopIn() => this.FadeIn(150, Easing.OutQuint);
+        protected override void PopIn() => this.FadeIn(100, Easing.OutQuint);
 
-        protected override void PopOut() => this.FadeOut(150, Easing.OutQuint);
+        protected override void PopOut()
+        {
+            ClearTransforms();
+            GetContainingFocusManager()?.ChangeFocus(null);
+            Alpha = 0;
+        }
+
+        protected override bool OnClick(ClickEvent e)
+        {
+            if (panel.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
+                return true;
+
+            Hide();
+            return true;
+        }
 
         protected override bool OnKeyDown(KeyDownEvent e)
         {
