@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlickTest.Desktop", "FlickT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlickTest.iOS", "FlickTest.iOS\FlickTest.iOS.csproj", "{7AA1DB5D-78DB-4693-AE50-D6078F5A0CAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlickTest.Android", "FlickTest.Android\FlickTest.Android.csproj", "{5D51D88B-B094-4E80-BC2D-34D4A1B4D53B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlickTest.Game", "FlickTest.Game\FlickTest.Game.csproj", "{1ADACD09-7BE3-46A1-AEAB-C41E78E8700F}"
 EndProject
 Project("{9344BDBB-3E7F-41FC-A0DD-8665D75EE146}") = "FlickTest.Game.Tests", "FlickTest.Game.Tests\FlickTest.Game.Tests.csproj", "{0A9CA1A5-5147-4AA8-9B9D-87178DE5A78D}"
@@ -71,6 +73,10 @@ Global
 		{31D3872C-3A4F-437E-9655-3EF58DD62F46}.Release|iPhone.Build.0 = Release|Any CPU
 		{31D3872C-3A4F-437E-9655-3EF58DD62F46}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
 		{31D3872C-3A4F-437E-9655-3EF58DD62F46}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{5D51D88B-B094-4E80-BC2D-34D4A1B4D53B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D51D88B-B094-4E80-BC2D-34D4A1B4D53B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D51D88B-B094-4E80-BC2D-34D4A1B4D53B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D51D88B-B094-4E80-BC2D-34D4A1B4D53B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

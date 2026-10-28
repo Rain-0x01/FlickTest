@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>FlickTest.Android</RootNamespace>
+    <AssemblyName>FlickTest.Android</AssemblyName>
+    <SupportedOSPlatformVersion>21.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
+    <AndroidHttpClientHandlerType>Xamarin.Android.Net.AndroidMessageHandler</AndroidHttpClientHandlerType>
+    <!-- See osu.Framework.Android.props upstream. -->
+    <NoWarn>$(NoWarn);XA4218</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FlickTest.Game\FlickTest.Game.csproj" />
+    <ProjectReference Include="..\FlickTest.Resources\FlickTest.Resources.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ppy.osu.Framework.Android" Version="2026.1005.0" />
+  </ItemGroup>
+</Project>
