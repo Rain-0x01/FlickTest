@@ -24,7 +24,13 @@ namespace FlickTest.Game
 
         private Ball target;
         private Container panel;
+        private ClickableContainer swatch;
+        private ClickableContainer dismiss;
+        private ClickableContainer pickerPanel;
         private BasicColourPicker colourPicker;
+        private Vector2 lastPanelSize;
+
+        private bool colourPickerVisible => pickerPanel.Alpha > 0;
 
         public BallConfigOverlay()
         {
@@ -52,11 +58,11 @@ namespace FlickTest.Game
                 swatchCircle.Colour = v.NewValue;
             }, true);
 
-            var swatch = new ClickableContainer
+            swatch = new ClickableContainer
             {
                 Position = new Vector2(170, 0),
                 Size = new Vector2(40),
-                Action = toggleColourPicker,
+                Action = openColourPicker,
                 Children = new Drawable[]
                 {
                     new Circle
@@ -70,14 +76,36 @@ namespace FlickTest.Game
 
             colourPicker = new BasicColourPicker
             {
+                Position = new Vector2(20),
                 Width = 200,
                 Current = colourProxy,
             };
 
+            pickerPanel = new ClickableContainer
+            {
+                Size = new Vector2(240, 440),
+                Alpha = 0,
+                Action = () => { },
+                Children = new Drawable[]
+                {
+                    new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = new Color4(0.1f, 0.1f, 0.15f, 1f),
+                    },
+                    colourPicker,
+                },
+            };
+
+            dismiss = new ClickableContainer
+            {
+                RelativeSizeAxes = Axes.Both,
+                Alpha = 0,
+                Action = closeColourPicker,
+            };
+
             panel = new Container
             {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
                 AutoSizeAxes = Axes.Both,
                 Children = new Drawable[]
                 {
@@ -118,7 +146,6 @@ namespace FlickTest.Game
                             new SettingRow("Glow radius", glowProxy),
                             new SettingRow("Friction", frictionProxy),
                             new SettingRow("Bounce", bounceProxy),
-                            colourPicker,
                             new BasicButton
                             {
                                 Size = new Vector2(140, 40),
@@ -131,7 +158,7 @@ namespace FlickTest.Game
                 },
             };
 
-            InternalChildren = new Drawable[] { panel };
+            InternalChildren = new Drawable[] { panel, dismiss, pickerPanel };
         }
 
         public void Open(Ball ball)
@@ -143,9 +170,38 @@ namespace FlickTest.Game
             frictionProxy.Value = ball.Friction.Value;
             bounceProxy.Value = ball.Bounce.Value;
             colourProxy.Value = ball.BallColour.Value;
-            colourPicker.Alpha = 0;
+            closeColourPicker();
 
             Show();
+            positionPanel();
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (target == null) return;
+
+            if (panel.DrawSize != lastPanelSize)
+            {
+                lastPanelSize = panel.DrawSize;
+                positionPanel();
+            }
+        }
+
+        private void positionPanel()
+        {
+            if (target == null) return;
+
+            Vector2 centre = ToLocalSpace(target.ScreenSpaceDrawQuad.Centre);
+            Vector2 size = panel.DrawSize;
+
+            Vector2 position = centre + new Vector2(target.DrawWidth / 2 + 16, -size.Y / 2);
+
+            position.X = Math.Clamp(position.X, 0, Math.Max(0, DrawWidth - size.X));
+            position.Y = Math.Clamp(position.Y, 0, Math.Max(0, DrawHeight - size.Y));
+
+            panel.Position = position;
         }
 
         private void apply(Action<Ball> action)
@@ -154,9 +210,34 @@ namespace FlickTest.Game
                 action(target);
         }
 
-        private void toggleColourPicker()
+        private void openColourPicker()
         {
-            colourPicker.Alpha = colourPicker.Alpha > 0 ? 0 : 1;
+            positionColourPicker();
+
+            dismiss.Alpha = 1;
+            pickerPanel.Alpha = 1;
+        }
+
+        private void closeColourPicker()
+        {
+            dismiss.Alpha = 0;
+            pickerPanel.Alpha = 0;
+            GetContainingFocusManager()?.ChangeFocus(null);
+        }
+
+        private void positionColourPicker()
+        {
+            Vector2 topLeft = ToLocalSpace(swatch.ScreenSpaceDrawQuad.TopLeft);
+            Vector2 topRight = ToLocalSpace(swatch.ScreenSpaceDrawQuad.TopRight);
+
+            float x = topRight.X + 8;
+
+            if (x + pickerPanel.Width > DrawWidth)
+                x = topLeft.X - pickerPanel.Width - 8;
+
+            float y = Math.Clamp(topRight.Y - 20, 0, Math.Max(0, DrawHeight - pickerPanel.Height));
+
+            pickerPanel.Position = new Vector2(x, y);
         }
 
         public void ApplyToAll()
@@ -180,12 +261,18 @@ namespace FlickTest.Game
         protected override void PopOut()
         {
             ClearTransforms();
-            GetContainingFocusManager()?.ChangeFocus(null);
+            closeColourPicker();
             Alpha = 0;
         }
 
         protected override bool OnClick(ClickEvent e)
         {
+            if (colourPickerVisible)
+            {
+                closeColourPicker();
+                return true;
+            }
+
             if (panel.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
                 return true;
 
@@ -197,7 +284,11 @@ namespace FlickTest.Game
         {
             if (e.Key != Key.Escape) return false;
 
-            Hide();
+            if (colourPickerVisible)
+                closeColourPicker();
+            else
+                Hide();
+
             return true;
         }
     }
